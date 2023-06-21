@@ -2,6 +2,7 @@
 
 namespace ConfigExperiment;
 
+#pragma warning disable CS8618 // Options type, values will be populated in Bind/Configure
 public abstract class ParsedAuthArtifactIssuerBase
 {
     /// <summary>
@@ -9,6 +10,6 @@ public abstract class ParsedAuthArtifactIssuerBase
     /// </summary>
     public abstract IEnumerable<string> AppIdentifierParts { get; }
 
-    [JsonProperty("$issuerType", Order = -2)]
-    public string IssuerTypeKey => GetType().Name;
+    public string AuthArtifactIssuerType { get; set; }
 }
+#pragma warning restore CS8618
