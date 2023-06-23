@@ -10,16 +10,19 @@ public class OptionsValueController : ControllerBase
 {
     [HttpGet]
     public object Get(
-        [FromServices] IOptions<AppRegistryEntryOptions> options,
-        [FromServices] IOptionsMonitor<AppRegistryEntryOptions> optionsMonitor,
-        [FromServices] IOptionsSnapshot<AppRegistryEntryOptions> optionsSnapshot
+        [FromServices] IOptionsMonitor<SingleInstanceOptions> singleInstanceOptions,
+        [FromServices] IOptions<ListOptions> listOptions,
+        [FromServices] IOptions<DictionaryOptions> dictOptions,
+        [FromServices] IOptions<DictionaryOptions_KeyIsTypeIdentifier> dictOptions_KeyIsTypeIdentifier
         )
     {
         return new
         {
-            options = options.Value,
-            optionsMonitor = optionsMonitor.CurrentValue,
-            optionsSnapshot = optionsSnapshot.Value
+            singleInstanceOptions_1 = singleInstanceOptions.Get("1"),
+            singleInstanceOptions_2 = singleInstanceOptions.Get("2"),
+            listOptions = listOptions.Value,
+            dictOptions = dictOptions.Value,
+            dictOptions_KeyIsTypeIdentifier = dictOptions_KeyIsTypeIdentifier.Value
         };
     }
 }
