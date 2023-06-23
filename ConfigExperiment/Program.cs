@@ -59,7 +59,8 @@ public partial class Program
             .AddNewtonsoftJson(o =>
             {
                 o.SerializerSettings.ContractResolver = new DefaultContractResolver();
-                o.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                // o.SerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All;
+                o.SerializerSettings.TypeNameAssemblyFormatHandling = Newtonsoft.Json.TypeNameAssemblyFormatHandling.Simple;
             });
 
         var app = builder.Build();
