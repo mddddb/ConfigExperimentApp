@@ -1,6 +1,7 @@
 
 using ConfigExperiment.Controllers;
 using ConfigExperiment.OptionsTypes;
+using CustomConfigurationBinder;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -41,7 +42,8 @@ public partial class Program
     // when we don't know about all the derived types in the package where we call CustomBind method, and different handlers for derived types would be added into the service collection
     static BinderDelegate binderWithTypeBindersAsDependency = (section, typeKey, sp, existingInstance) =>
     {
-        var typeBinder = sp.GetRequiredService<IEnumerable<IConfigurationBinderForTypeIdentifier>>().First(x => x.TypeIdentifierKey == typeKey);
+        var typeBinder = sp.GetRequiredService<IEnumerable<IConfigurationBinderForTypeIdentifier>>()
+            .First(x => x.TypeIdentifierKey == typeKey);
 
         typeBinder.Bind(section, ref existingInstance);
 
@@ -54,10 +56,10 @@ public partial class Program
 
         builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-        builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigurationBinderForTypeIdentifier, DerivedType1ConfigurationBinder>());
-        builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigurationBinderForTypeIdentifier, DerivedType2ConfigurationBinder>());
+        //builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigurationBinderForTypeIdentifier, DerivedType1ConfigurationBinder>());
+        //builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigurationBinderForTypeIdentifier, DerivedType2ConfigurationBinder>());
 
-        ConfigureOptions(builder, binderWithTypeBindersAsDependency);
+        ConfigureOptions(builder, binderWithNoDependencies);
 
         builder.Services.AddControllers()
             .AddNewtonsoftJson(o =>
@@ -86,52 +88,12 @@ public partial class Program
 
     private static void ConfigureOptions(WebApplicationBuilder builder, BinderDelegate binderDelegate)
     {
-        IConfigurationSection configurationSection;
-
-        // SingleInstance
-        configurationSection = builder.Configuration.GetSection("SingleInstance_DerivedType1");
-        builder.Services.AddOptions<SingleInstanceOptions>("1")
-            .CustomBind(configurationSection, (_, o, sp) =>
-            {
-                o.Item = binderDelegate(o.ItemAsSection, o.ItemAsSection["_Type"]!, sp, o.Item);
-            }, binderOptions => binderOptions.BindNonPublicProperties = true);
-
-        configurationSection = builder.Configuration.GetSection("SingleInstance_DerivedType2");
-        builder.Services.AddOptions<SingleInstanceOptions>("2")
-            .CustomBind(configurationSection, (_, o, sp) =>
-            {
-                o.Item = binderDelegate(o.ItemAsSection, o.ItemAsSection["_Type"]!, sp, o.Item);
-            }, binderOptions => binderOptions.BindNonPublicProperties = true);
+        builder.Services.AddSingleton<ICustomConfigurationBinder, DerivedType1ConfigurationBinder>();
+        builder.Services.AddSingleton<ICustomConfigurationBinder, DerivedType2ConfigurationBinder>();
 
         // List
-        configurationSection = builder.Configuration.GetSection("List");
+        var configurationSection = builder.Configuration.GetSection("List");
         builder.Services.AddOptions<ListOptions>()
-            .CustomBind(configurationSection, (_, o, sp) =>
-            {
-                o.Items.AddRange(o.ItemsAsSections
-                    .Select(section => binderDelegate(section, section["_Type"]!, sp, existingInstance: null) ?? throw new InvalidOperationException()));
-            }, binderOptions => binderOptions.BindNonPublicProperties = true);
-
-        // Dictionary
-        configurationSection = builder.Configuration.GetSection("Dictionary");
-        builder.Services.AddOptions<DictionaryOptions>()
-            .CustomBind(configurationSection, (_, o, sp) =>
-            {
-                foreach (var kvp in o.ItemsAsDictionaryOfSections)
-                {
-                    o.Items[Guid.Parse(kvp.Key)] = binderDelegate(kvp.Value, kvp.Value["_Type"]!, sp, existingInstance: null)!;
-                }
-            }, binderOptions => binderOptions.BindNonPublicProperties = true);
-
-        // Dictionary_KeyIsTypeIdentifier
-        configurationSection = builder.Configuration.GetSection("Dictionary_KeyIsTypeIdentifier");
-        builder.Services.AddOptions<DictionaryOptions_KeyIsTypeIdentifier>()
-            .CustomBind(configurationSection, (_, o, sp) =>
-            {
-                foreach (var kvp in o.ItemsAsDictionaryOfSections)
-                {
-                    o.Items[kvp.Key] = binderDelegate(kvp.Value, kvp.Key, sp, existingInstance: null)!;
-                }
-            }, binderOptions => binderOptions.BindNonPublicProperties = true);
+            .CustomBind(configurationSection);
     }
 }

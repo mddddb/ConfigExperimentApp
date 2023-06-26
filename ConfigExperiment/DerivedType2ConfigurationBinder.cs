@@ -1,12 +1,13 @@
 ﻿using ConfigExperiment.OptionsTypes;
+using CustomConfigurationBinder;
 
 namespace ConfigExperiment;
 
-internal sealed class DerivedType2ConfigurationBinder : IConfigurationBinderForTypeIdentifier
+internal sealed class DerivedType2ConfigurationBinder : ICustomConfigurationBinder
 {
     public string TypeIdentifierKey => "derived2";
 
-    public void Bind(IConfigurationSection configSection, ref IOptionsBase? options)
+    public void Bind(IConfigurationSection configSection, ref object? options)
     {
         if (options is null)
         {
