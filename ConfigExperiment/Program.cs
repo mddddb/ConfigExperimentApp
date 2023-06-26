@@ -3,6 +3,7 @@ using ConfigExperiment.Controllers;
 using ConfigExperiment.OptionsTypes;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Newtonsoft.Json.Serialization;
 using static System.Collections.Specialized.BitVector32;
 
@@ -53,7 +54,10 @@ public partial class Program
 
         builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-        ConfigureOptions(builder, binderWithNoDependencies);
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigurationBinderForTypeIdentifier, DerivedType1ConfigurationBinder>());
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigurationBinderForTypeIdentifier, DerivedType2ConfigurationBinder>());
+
+        ConfigureOptions(builder, binderWithTypeBindersAsDependency);
 
         builder.Services.AddControllers()
             .AddNewtonsoftJson(o =>
