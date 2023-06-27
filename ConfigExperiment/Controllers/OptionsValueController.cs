@@ -11,7 +11,7 @@ public class OptionsValueController : ControllerBase
     [HttpGet]
     public object Get(
         [FromServices] IOptionsMonitor<SingleInstanceOptions> singleInstanceOptions,
-        [FromServices] IOptions<ListOptions> listOptions,
+        [FromServices] IOptionsMonitor<ListOptions> listOptions,
         [FromServices] IOptions<DictionaryOptions> dictOptions,
         [FromServices] IOptions<DictionaryOptions_KeyIsTypeIdentifier> dictOptions_KeyIsTypeIdentifier
         )
@@ -21,7 +21,8 @@ public class OptionsValueController : ControllerBase
             singleInstanceOptions_1 = singleInstanceOptions.Get("1"),
             singleInstanceOptions_2 = singleInstanceOptions.Get("2"),
             singleInstanceOptions_2_withoutConfigSectionProperty = singleInstanceOptions.Get("2_withoutConfigSectionProperty"),
-            listOptions = listOptions.Value,
+            listOptions = listOptions.CurrentValue,
+            listOptions_withoutConfigSectionProperty = listOptions.Get("withoutConfigSectionProperty"),
             dictOptions = dictOptions.Value,
             dictOptions_KeyIsTypeIdentifier = dictOptions_KeyIsTypeIdentifier.Value
         };

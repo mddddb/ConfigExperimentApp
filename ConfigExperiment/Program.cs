@@ -78,7 +78,7 @@ public partial class Program
                 var typeIdentifierKey = polymorphicConfigSection.GetValue<string>("_Type")!;
 
                 o.Item = customConfigBinder.Bind(typeIdentifierKey, polymorphicConfigSection);
-            }, binderOptions => binderOptions.BindNonPublicProperties = true);
+            });
 
         // List
         configurationSection = builder.Configuration.GetSection("List");
@@ -90,6 +90,19 @@ public partial class Program
                 o.Items.AddRange(o.ItemsAsSections
                     .Select(section => customConfigBinder.Bind(section["_Type"]!, section) ?? throw new InvalidOperationException()));
             }, binderOptions => binderOptions.BindNonPublicProperties = true);
+
+        builder.Services.AddOptions<ListOptions>("withoutConfigSectionProperty")
+            .CustomBind(configurationSection, (configSection, o, sp) =>
+            {
+                var customConfigBinder = sp.GetRequiredService<ICustomConfigurationBinder>();
+
+                var polymorphicConfigSections = configSection
+                    .GetRequiredSection(nameof(ListOptions.Items))
+                    .GetChildren();
+
+                o.Items.AddRange(polymorphicConfigSections
+                    .Select(section => customConfigBinder.Bind(section["_Type"]!, section) ?? throw new InvalidOperationException()));
+            });
 
         // Dictionary
         configurationSection = builder.Configuration.GetSection("Dictionary");
