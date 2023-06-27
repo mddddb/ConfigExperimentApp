@@ -1,14 +1,11 @@
-﻿using System.ComponentModel;
+﻿namespace ConfigExperiment;
 
-namespace ConfigExperiment;
-
+/// <summary>
+/// Options type with a List property, where the values are polymorphic.
+/// </summary>
 public class ListOptions
 {
     public string SomeRegularProperty { get; set; }
 
-    [ConfigurationKeyName(nameof(Items))]
-    internal List<IConfigurationSection> ItemsAsSections { get; set; } = new();
-
-    [ConfigurationKeyName("___invalidConfigSectionKeyOnPurpose___")]
     public List<IOptionsBase> Items { get; set; } = new List<IOptionsBase>();
 }

@@ -1,65 +1,18 @@
-
-using ConfigExperiment.Controllers;
 using ConfigExperiment.OptionsTypes;
 using CustomConfigurationBinder;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Newtonsoft.Json.Serialization;
-using static System.Collections.Specialized.BitVector32;
 
 namespace ConfigExperiment;
 
 public partial class Program
 {
-    /// <summary>
-    /// Just a delegate so that we don't use unclear Func{T,...TN}
-    /// </summary>
-    /// <param name="configSection">Configuration section to bind</param>
-    /// <param name="typeIdentifierKey">Value that should identify the exact derived type</param>
-    /// <param name="serviceProvider">DI container just in case the binding logic has some dependencies</param>
-    /// <param name="existingInstance">Existing instance to bind to in case there is one, instead of creating a new instance</param>
-    /// <returns></returns>
-    private delegate IOptionsBase? BinderDelegate(IConfigurationSection configSection, string typeIdentifierKey, IServiceProvider serviceProvider, IOptionsBase? existingInstance);
-
-    // when we know about all the derived types in the package where we call CustomBind method
-    static BinderDelegate binderWithNoDependencies = (section, typeKey, _, existingInstance) =>
-    {
-        if (existingInstance is not null)
-        {
-            section.Bind(existingInstance);
-            return existingInstance;
-        }
-
-        return typeKey switch
-        {
-            "derived1" => section.Get<DerivedType1>(),
-            "derived2" => section.Get<DerivedType2>(),
-            _ => null
-        };
-    };
-
-    // when we don't know about all the derived types in the package where we call CustomBind method, and different handlers for derived types would be added into the service collection
-    static BinderDelegate binderWithTypeBindersAsDependency = (section, typeKey, sp, existingInstance) =>
-    {
-        var typeBinder = sp.GetRequiredService<IEnumerable<IConfigurationBinderForTypeIdentifier>>()
-            .First(x => x.TypeIdentifierKey == typeKey);
-
-        typeBinder.Bind(section, ref existingInstance);
-
-        return existingInstance;
-    };
-
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-        //builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigurationBinderForTypeIdentifier, DerivedType1ConfigurationBinder>());
-        //builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigurationBinderForTypeIdentifier, DerivedType2ConfigurationBinder>());
-
-        ConfigureOptions(builder, binderWithNoDependencies);
+        ConfigureOptions(builder);
 
         builder.Services.AddControllers()
             .AddNewtonsoftJson(o =>
@@ -86,14 +39,47 @@ public partial class Program
         app.Run();
     }
 
-    private static void ConfigureOptions(WebApplicationBuilder builder, BinderDelegate binderDelegate)
+    private static void ConfigureOptions(WebApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<ICustomConfigurationBinder, DerivedType1ConfigurationBinder>();
-        builder.Services.AddSingleton<ICustomConfigurationBinder, DerivedType2ConfigurationBinder>();
+        builder.Services.AddSingleton<ICustomConfigurationBinder, CustomConfigBinder>();
+
+        IConfigurationSection? configurationSection = null;
+
+        // SingleInstance
+        configurationSection = builder.Configuration.GetSection("SingleInstance_DerivedType1");
+        builder.Services.AddOptions<SingleInstanceOptions>("1")
+            .CustomBind(configurationSection);
+
+        configurationSection = builder.Configuration.GetSection("SingleInstance_DerivedType2");
+        builder.Services.AddOptions<SingleInstanceOptions>("2")
+            .CustomBind(configurationSection);
 
         // List
-        var configurationSection = builder.Configuration.GetSection("List");
+        configurationSection = builder.Configuration.GetSection("List");
         builder.Services.AddOptions<ListOptions>()
             .CustomBind(configurationSection);
+
+        // Dictionary
+        configurationSection = builder.Configuration.GetSection("Dictionary");
+        builder.Services.AddOptions<DictionaryOptions>()
+            .CustomBind(configurationSection);
+
+        // Dictionary_KeyIsTypeIdentifier
+        configurationSection = builder.Configuration.GetSection("Dictionary_KeyIsTypeIdentifier");
+        builder.Services.AddOptions<DictionaryOptions_KeyIsTypeIdentifier>()
+            .CustomBind(configurationSection);
+    }
+
+    private class CustomConfigBinder : ICustomConfigurationBinder
+    {
+        public object? Bind(string typeIdentifierKey, IConfiguration config)
+        {
+            return typeIdentifierKey switch
+            {
+                "derived1" => config.Get<DerivedType1>(),
+                "derived2" => config.Get<DerivedType2>(),
+                _ => null
+            };
+        }
     }
 }

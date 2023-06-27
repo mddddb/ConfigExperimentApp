@@ -4,6 +4,5 @@ namespace CustomConfigurationBinder;
 
 public interface ICustomConfigurationBinder
 {
-    string TypeIdentifierKey { get; }
-    void Bind(IConfigurationSection configSection, ref object? options);
+    object? Bind(string typeIdentifierKey, IConfiguration config);
 }
