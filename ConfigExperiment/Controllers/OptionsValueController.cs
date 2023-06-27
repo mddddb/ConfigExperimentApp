@@ -20,6 +20,7 @@ public class OptionsValueController : ControllerBase
         {
             singleInstanceOptions_1 = singleInstanceOptions.Get("1"),
             singleInstanceOptions_2 = singleInstanceOptions.Get("2"),
+            singleInstanceOptions_2_withoutConfigSectionProperty = singleInstanceOptions.Get("2_withoutConfigSectionProperty"),
             listOptions = listOptions.Value,
             dictOptions = dictOptions.Value,
             dictOptions_KeyIsTypeIdentifier = dictOptions_KeyIsTypeIdentifier.Value
