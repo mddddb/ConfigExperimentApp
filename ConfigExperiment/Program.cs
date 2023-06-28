@@ -1,11 +1,5 @@
-
-using ConfigExperiment.Controllers;
 using ConfigExperiment.OptionsTypes;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Newtonsoft.Json.Serialization;
-using static System.Collections.Specialized.BitVector32;
 
 namespace ConfigExperiment;
 
@@ -19,7 +13,8 @@ public partial class Program
 
         ConfigureOptions(builder);
 
-        builder.Services.AddControllers()
+        builder.Services
+            .AddControllers()
             .AddNewtonsoftJson(o =>
             {
                 o.SerializerSettings.ContractResolver = new DefaultContractResolver();
@@ -49,7 +44,7 @@ public partial class Program
 
         IConfigurationSection configurationSection;
 
-        // SingleInstance
+        #region SingleInstance
         configurationSection = builder.Configuration.GetSection("SingleInstance_DerivedType1");
         builder.Services.AddOptions<SingleInstanceOptions>("1")
             .CustomBind(configurationSection, (_, o, sp) =>
@@ -79,8 +74,9 @@ public partial class Program
 
                 o.Item = customConfigBinder.Bind(typeIdentifierKey, polymorphicConfigSection);
             });
+        #endregion
 
-        // List
+        #region List
         configurationSection = builder.Configuration.GetSection("List");
         builder.Services.AddOptions<ListOptions>()
             .CustomBind(configurationSection, (_, o, sp) =>
@@ -103,8 +99,9 @@ public partial class Program
                 o.Items.AddRange(polymorphicConfigSections
                     .Select(section => customConfigBinder.Bind(section["_Type"]!, section) ?? throw new InvalidOperationException()));
             });
+        #endregion
 
-        // Dictionary
+        #region Dictionary
         configurationSection = builder.Configuration.GetSection("Dictionary");
         builder.Services.AddOptions<DictionaryOptions>()
             .CustomBind(configurationSection, (_, o, sp) =>
@@ -116,8 +113,9 @@ public partial class Program
                     o.Items[Guid.Parse(kvp.Key)] = customConfigBinder.Bind(kvp.Value["_Type"]!, kvp.Value)!;
                 }
             }, binderOptions => binderOptions.BindNonPublicProperties = true);
+        #endregion
 
-        // Dictionary_KeyIsTypeIdentifier
+        #region Dictionary_KeyIsTypeIdentifier
         configurationSection = builder.Configuration.GetSection("Dictionary_KeyIsTypeIdentifier");
         builder.Services.AddOptions<DictionaryOptions_KeyIsTypeIdentifier>()
             .CustomBind(configurationSection, (_, o, sp) =>
@@ -129,10 +127,13 @@ public partial class Program
                     o.Items[kvp.Key] = customConfigBinder.Bind(kvp.Key, kvp.Value)!;
                 }
             }, binderOptions => binderOptions.BindNonPublicProperties = true);
+        #endregion
     }
 
     private class CustomConfigBinder : ICustomConfigurationBinder
     {
+        // method receives a type identifier that is similar to the $type in Json.NET (except being explicitly registered instead of reflection),
+        // and tries to bind/parse a config section into the found type
         public IOptionsBase? Bind(string typeIdentifierKey, IConfigurationSection configSection)
         {
             return typeIdentifierKey switch
