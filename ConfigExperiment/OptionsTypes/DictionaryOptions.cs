@@ -10,5 +10,5 @@ public class DictionaryOptions
 {
     public string SomeRegularProperty { get; set; }
 
-    public Dictionary<string, IOptionsBase> Items { get; set; } = new();
+    public Dictionary<string, IPolymorphic> Items { get; set; } = new();
 }

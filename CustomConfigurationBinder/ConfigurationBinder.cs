@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using CustomConfigurationBinder;
 using Microsoft.Extensions.Internal;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.Configuration
 {
@@ -20,6 +21,19 @@ namespace Microsoft.Extensions.Configuration
     /// </summary>
     public static class ConfigurationBinder
     {
+        // this method would rather be in Microsoft.Extensions.DependencyInjection.OptionsBuilderConfigurationExtensions, here just for ProofOfConcept
+        public static OptionsBuilder<TOptions> CustomBind<TOptions>(
+            this OptionsBuilder<TOptions> optionsBuilder,
+            IConfigurationSection configSection,
+            Action<BinderOptions>? configureOptions = null)
+            where TOptions : class
+        {
+            return optionsBuilder.Configure<ICustomConfigurationBinder>((options, customBinder) =>
+            {
+                configSection.CustomBind(options, customBinder, configureOptions);
+            });
+        }
+
         private const BindingFlags DeclaredOnlyLookup = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
         private const string DynamicCodeWarningMessage = "Binding strongly typed objects to configuration values requires generating dynamic code at runtime, for example instantiating generic types.";
         private const string TrimmingWarningMessage = "In case the type is non-primitive, the trimmer cannot statically analyze the object's type so its members may be trimmed.";
@@ -34,7 +48,7 @@ namespace Microsoft.Extensions.Configuration
         /// <param name="configureOptions">Configures the binder options.</param>
         [RequiresDynamicCode(DynamicCodeWarningMessage)]
         [RequiresUnreferencedCode(InstanceGetTypeTrimmingWarningMessage)]
-        public static void CustomBind(this IConfiguration configuration, object? instance, Action<BinderOptions>? configureOptions, ICustomConfigurationBinder customConfigurationBinder)
+        public static void CustomBind(this IConfiguration configuration, object? instance, ICustomConfigurationBinder customConfigurationBinder, Action<BinderOptions>? configureOptions = null)
         {
             if (instance != null)
             {

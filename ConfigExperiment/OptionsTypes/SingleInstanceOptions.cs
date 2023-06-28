@@ -7,5 +7,5 @@ public class SingleInstanceOptions
 {
     public string SomeRegularProperty { get; set; }
 
-    public IOptionsBase? Item { get; set; }
+    public IPolymorphic? Item { get; set; }
 }

@@ -24,14 +24,6 @@ public partial class Program
 
         var app = builder.Build();
 
-        app.Use((context, next) =>
-        {
-            var endpoint = context.GetEndpoint();
-
-            return next();
-        });
-
-
         app.UseHttpsRedirection();
 
         app.MapControllers();

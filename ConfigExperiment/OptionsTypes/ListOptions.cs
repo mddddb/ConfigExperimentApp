@@ -7,5 +7,5 @@ public class ListOptions
 {
     public string SomeRegularProperty { get; set; }
 
-    public List<IOptionsBase> Items { get; set; } = new List<IOptionsBase>();
+    public List<IPolymorphic> Items { get; set; } = new List<IPolymorphic>();
 }

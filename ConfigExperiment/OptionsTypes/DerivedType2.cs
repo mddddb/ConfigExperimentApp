@@ -1,6 +1,6 @@
 ﻿namespace ConfigExperiment.OptionsTypes;
 
-public class DerivedType2 : IOptionsBase
+public class DerivedType2 : IPolymorphic
 {
     public bool SharedNameProperty { get; set; }
 
