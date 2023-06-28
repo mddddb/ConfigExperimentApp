@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using ConfigExperiment.OptionsTypes;
+using System.ComponentModel;
 
 namespace ConfigExperiment;
 
@@ -13,5 +14,5 @@ public class SingleInstanceOptions
     internal IConfigurationSection ItemAsSection { get; set; }
 
     [ConfigurationKeyName("___invalidConfigSectionKeyOnPurpose___")]
-    public IOptionsBase? Item { get; set; }
+    public IPolymorphic? Item { get; set; }
 }

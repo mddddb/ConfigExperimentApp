@@ -2,5 +2,6 @@
 
 internal interface ICustomConfigurationBinder
 {
-    IOptionsBase? Bind(string typeIdentifierKey, IConfigurationSection configSection);
+    // create a new instance if possible and bind the config section to it
+    IPolymorphic? Bind(string typeIdentifierKey, IConfigurationSection configSection);
 }

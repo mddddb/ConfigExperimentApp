@@ -24,13 +24,6 @@ public partial class Program
 
         var app = builder.Build();
 
-        app.Use((context, next) =>
-        {
-            var endpoint = context.GetEndpoint();
-
-            return next();
-        });
-
         app.UseHttpsRedirection();
 
         app.MapControllers();
@@ -51,7 +44,14 @@ public partial class Program
             {
                 var customConfigBinder = sp.GetRequiredService<ICustomConfigurationBinder>();
 
-                o.Item = customConfigBinder.Bind(o.ItemAsSection["_Type"]!, o.ItemAsSection);
+                if (o.Item is not null)
+                {
+                    o.ItemAsSection.Bind(o.Item);
+                }
+                else
+                {
+                    o.Item = customConfigBinder.Bind(o.ItemAsSection["_Type"]!, o.ItemAsSection);
+                }
             }, binderOptions => binderOptions.BindNonPublicProperties = true);
 
         configurationSection = builder.Configuration.GetSection("SingleInstance_DerivedType2");
@@ -60,7 +60,14 @@ public partial class Program
             {
                 var customConfigBinder = sp.GetRequiredService<ICustomConfigurationBinder>();
 
-                o.Item = customConfigBinder.Bind(o.ItemAsSection["_Type"]!, o.ItemAsSection);
+                if (o.Item is not null)
+                {
+                    o.ItemAsSection.Bind(o.Item);
+                }
+                else
+                {
+                    o.Item = customConfigBinder.Bind(o.ItemAsSection["_Type"]!, o.ItemAsSection);
+                }
             }, binderOptions => binderOptions.BindNonPublicProperties = true);
 
         configurationSection = builder.Configuration.GetSection("SingleInstance_DerivedType2");
@@ -70,9 +77,16 @@ public partial class Program
                 var customConfigBinder = sp.GetRequiredService<ICustomConfigurationBinder>();
 
                 var polymorphicConfigSection = configSection.GetRequiredSection(nameof(SingleInstanceOptions.Item));
-                var typeIdentifierKey = polymorphicConfigSection.GetValue<string>("_Type")!;
 
-                o.Item = customConfigBinder.Bind(typeIdentifierKey, polymorphicConfigSection);
+                if (o.Item is not null)
+                {
+                    polymorphicConfigSection.Bind(o.Item);
+                }
+                else
+                {
+                    var typeIdentifierKey = polymorphicConfigSection.GetValue<string>("_Type")!;
+                    o.Item = customConfigBinder.Bind(typeIdentifierKey, polymorphicConfigSection);
+                }
             });
         #endregion
 
@@ -110,7 +124,16 @@ public partial class Program
 
                 foreach (var kvp in o.ItemsAsDictionaryOfSections)
                 {
-                    o.Items[Guid.Parse(kvp.Key)] = customConfigBinder.Bind(kvp.Value["_Type"]!, kvp.Value)!;
+                    var guidKey = Guid.Parse(kvp.Key);
+
+                    if (o.Items.TryGetValue(guidKey, out var existingValue))
+                    {
+                        kvp.Value.Bind(existingValue);
+                    }
+                    else
+                    {
+                        o.Items[guidKey] = customConfigBinder.Bind(kvp.Value["_Type"]!, kvp.Value)!;
+                    }
                 }
             }, binderOptions => binderOptions.BindNonPublicProperties = true);
         #endregion
@@ -124,7 +147,14 @@ public partial class Program
 
                 foreach (var kvp in o.ItemsAsDictionaryOfSections)
                 {
-                    o.Items[kvp.Key] = customConfigBinder.Bind(kvp.Key, kvp.Value)!;
+                    if (o.Items.TryGetValue(kvp.Key, out var existingValue))
+                    {
+                        kvp.Value.Bind(existingValue);
+                    }
+                    else
+                    {
+                        o.Items[kvp.Key] = customConfigBinder.Bind(kvp.Key, kvp.Value)!;
+                    }
                 }
             }, binderOptions => binderOptions.BindNonPublicProperties = true);
         #endregion
@@ -134,7 +164,7 @@ public partial class Program
     {
         // method receives a type identifier that is similar to the $type in Json.NET (except being explicitly registered instead of reflection),
         // and tries to bind/parse a config section into the found type
-        public IOptionsBase? Bind(string typeIdentifierKey, IConfigurationSection configSection)
+        public IPolymorphic? Bind(string typeIdentifierKey, IConfigurationSection configSection)
         {
             return typeIdentifierKey switch
             {

@@ -1,5 +1,5 @@
 ﻿namespace ConfigExperiment;
 
-public interface IOptionsBase
+public interface IPolymorphic
 {
 }

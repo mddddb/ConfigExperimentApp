@@ -16,6 +16,5 @@ public class DictionaryOptions_KeyIsTypeIdentifier
     internal Dictionary<string, IConfigurationSection> ItemsAsDictionaryOfSections { get; set; } = new();
 
     [ConfigurationKeyName("___invalidConfigSectionKeyOnPurpose___")]
-    public Dictionary<string, IOptionsBase> Items { get; set; } = new();
-
+    public Dictionary<string, IPolymorphic> Items { get; set; } = new();
 }
